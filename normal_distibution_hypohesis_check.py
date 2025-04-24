@@ -1,86 +1,187 @@
+from interval_series import (
+    get_interval_boarders,
+    get_whole_range,
+    get_interval_statistical_series,
+)
+from latex_generator import compute_table_to_latex_table_str_to_file
+from variation_series import (
+    get_expected_value_estimate,
+    get_sample_standard_deviation_corrected,
+    laplace_normalized_function,
+)
+from math import inf
+import math
 
 
-# приняв в качестве нулевой гипотезы Н0: генеральная совокупность
-# из которой извлечена выборка, имеет нормальное
-# распределение, проверить ее, пользуясь критерием Пирсона
-# при ровне значимости α 0,025
+def calculate_chi_squared_statistic(
+    data: list[float], num_intervals: int, precision: int
+) -> float:
+    """
+    Performs Pearson's chi-squared test for normality assumption.
 
-from interval_series import *
-from latex_generator import *
-from variation_series import *
+    Args:
+        data: Input sample data
+        num_intervals: Number of intervals for frequency analysis
+        precision: Number of decimal places for rounding
 
-def compute_theoretical_values(nums: list[float], count: int):
-    whole_range = get_whole_range(nums)
-    average = round(get_expected_value_estimate(nums),2)
-    #m_i
-    n_i = get_interval_statistical_series(whole_range, count, nums)
-    # interval_length = get_interval_length(whole_range, count);
+    Returns:
+        Calculated chi-squared statistic
+    """
+    # Data characteristics calculation
+    data_range = get_whole_range(data)
+    sample_mean = round(get_expected_value_estimate(data), precision)
+    sample_std = get_sample_standard_deviation_corrected(data, sample_mean)
 
-    interval_boarders = get_interval_boarders(whole_range, count, nums)
-    #sigma (с.к.о.)
-    value_deviation = get_sample_standard_deviation_corrected(nums, average);
+    # Interval calculations
+    observed_frequencies = get_interval_statistical_series(
+        data_range, num_intervals, data
+    )
+    interval_borders = get_interval_boarders(data_range, num_intervals, data)
 
+    # Z-score calculations for interval borders
+    z_scores = calculate_z_scores(
+        interval_borders, sample_mean, sample_std, num_intervals, precision
+    )
 
-    z_i = dict()
-    for i in range(2, count):
-        z_i[i] = round((interval_boarders[i] - average)/value_deviation,2)
+    # Generate interval analysis tables
+    intervals_table = create_intervals_table(
+        interval_borders, z_scores, sample_mean, num_intervals, precision
+    )
+    export_table_to_latex(intervals_table, "tex/output/hypotheses/intervals_table.tex")
 
-    z_i[1] = -math.inf
-    z_i[count] = math.inf
+    # Probability and frequency calculations
+    expected_frequencies, probabilities = calculate_expected_frequencies(
+        z_scores, num_intervals, len(data), precision
+    )
+    probabilities_table = create_probabilities_table(
+        z_scores, probabilities, expected_frequencies, precision
+    )
+    export_table_to_latex(
+        probabilities_table, "tex/output/hypotheses/probabilities_table.tex"
+    )
 
-    first_table = dict()
-    for i in range(1, count):
-        first_table[i] = dict()
-        (first_table.get(i))[f"(x_{i}, x_{i+1})"] = (interval_boarders[i], interval_boarders[i+1])
-        (first_table.get(i))[f"(x_{i} - x_{"{avg}"}, x_{i+1} - x_{"{avg}"})"] = (round(interval_boarders[i] - average,2), round((interval_boarders[i+1] - average),2))
-        (first_table.get(i))[f"(z_{i}, z_{i+1})"] = (z_i[i], z_i[i+1])
-        print(f"{i}: {first_table[i]}")
-    compute_table_to_latex_table_str_to_file(first_table, "tex/output/hypophyses/first_table.tex")
-    # print(f"{compute_table_to_latex_table_str(first_table)}")
+    # Chi-squared statistic calculation
+    chi_squared_components = calculate_chi_squared_components(
+        observed_frequencies, expected_frequencies, precision
+    )
+    export_table_to_latex(
+        chi_squared_components, "tex/output/hypotheses/chi_squared_components.tex"
+    )
 
-
-    print("-----------------------------------------")
-    n_i_shtrih = dict()
-    P_i = dict()
-    second_table = dict()
-    for i in range(1, count):
-        second_table[i] = dict()
-        (second_table.get(i))[f"(z_{i}, z_{i+1})"] = (z_i[i], z_i[i+1])
-        (second_table.get(i))[f"(\\Phi(z_{i})"] = round(laplace_normalized_function(z_i[i]),2)
-        (second_table.get(i))[f"(\\Phi(z_{i+1})"] = round(laplace_normalized_function(z_i[i+1]),2)
-        P_i[i] = laplace_normalized_function(z_i[i+1]) - laplace_normalized_function(z_i[i])
-        (second_table.get(i))[f"P_{i}"] = round(P_i[i],2)
-        n_i_shtrih[i] = len(nums)*(laplace_normalized_function(z_i[i+1]) - laplace_normalized_function(z_i[i]))
-        (second_table.get(i))[f"n'_{i}"] = round(n_i_shtrih[i],2)
-        print(f"{i}: {second_table[i]}")
-    print(f"sum n_i' = {sum(n_i_shtrih.values())}")
-    print(f"sum P_i = {sum(P_i.values())}")
-    print("-------------------------------------")
-    compute_table_to_latex_table_str_to_file(second_table, "tex/output/hypophyses/second_table.tex")
-
-    m_i_table = dict()
-    result_sum = 0
-    for i in range(1, count):
-        m_i_table[i] = dict()
-        # res_table[i]
-        (m_i_table.get(i))["n_i"] = round(n_i[i-1],2)
-        (m_i_table.get(i))["n'_i"] = round(n_i_shtrih[i],2)
-        (m_i_table.get(i))["n_i - n'_i"] = round(n_i[i-1] - n_i_shtrih[i],2)
-        (m_i_table.get(i))["(n_i - n'_i)^2"] = round((n_i[i-1] - n_i_shtrih[i])**2,2)
-        (m_i_table.get(i))["(n_i - n'_i)^2/n'_i"] = round(((n_i[i-1] - n_i_shtrih[i])**2)/n_i_shtrih[i],2)
-        print(f"{i}: {m_i_table[i]}")
-        result_sum += ((n_i[i-1] - n_i_shtrih[i])**2)/n_i_shtrih[i]
-
-    compute_table_to_latex_table_str_to_file(m_i_table, "tex/output/hypophyses/m_i_table.tex")
-
-    print(f"sum n_i = {sum(n_i)}")
-    print(f"sum n'_i = {sum(n_i_shtrih.values())}")
-
-    # for i in range(count):
-    #     print(f"{i+1}: {m_i_table[i+1]}")
-
-    return result_sum
+    return sum(row["component"] for row in chi_squared_components.values())
 
 
-def phi_function(x: float):
-    return (1/math.sqrt(2*math.pi))*math.exp((-x**2)/2);
+def calculate_z_scores(
+    interval_borders: list[float],
+    mean: float,
+    std: float,
+    num_intervals: int,
+    precision: int,
+) -> dict[int, float]:
+    """Calculates z-scores for interval borders with edge handling."""
+    z_scores = {}
+    # Handle middle intervals
+    for i in range(2, num_intervals):
+        z_scores[i] = round((interval_borders[i] - mean) / std, precision)
+
+    # Set edge values
+    z_scores[1] = -inf
+    z_scores[num_intervals] = inf
+    return z_scores
+
+
+def create_intervals_table(
+    interval_borders: list[float],
+    z_scores: dict[int, float],
+    mean: float,
+    num_intervals: int,
+    precision: int,
+) -> dict[int, dict]:
+    """Creates table showing interval transformations."""
+    table = {}
+    for interval in range(1, num_intervals):
+        table_entry = {
+            "interval": (interval_borders[interval], interval_borders[interval + 1]),
+            "centered_interval": (
+                round(interval_borders[interval] - mean, precision),
+                round(interval_borders[interval + 1] - mean, precision),
+            ),
+            "z_scores": (z_scores[interval], z_scores[interval + 1]),
+        }
+        table[interval] = table_entry
+    return table
+
+
+def calculate_expected_frequencies(
+    z_scores: dict[int, float], num_intervals: int, sample_size: int, precision: int
+) -> tuple[dict[int, float], dict[int, float]]:
+    """Calculates expected frequencies and probabilities for intervals."""
+    expected_frequencies = {}
+    probabilities = {}
+
+    for interval in range(1, num_intervals):
+        phi_low = laplace_normalized_function(z_scores[interval])
+        phi_high = laplace_normalized_function(z_scores[interval + 1])
+
+        probability = phi_high - phi_low
+        expected_freq = sample_size * probability
+
+        probabilities[interval] = round(probability, precision)
+        expected_frequencies[interval] = round(expected_freq, precision)
+
+    return expected_frequencies, probabilities
+
+
+def create_probabilities_table(
+    z_scores: dict[int, float],
+    probabilities: dict[int, float],
+    expected_frequencies: dict[int, float],
+    precision: int,
+) -> dict[int, dict]:
+    """Creates table showing probability calculations."""
+    table = {}
+    for interval in probabilities:
+        table_entry = {
+            "z_interval": (z_scores[interval], z_scores[interval + 1]),
+            "phi_low": round(
+                laplace_normalized_function(z_scores[interval]), precision
+            ),
+            "phi_high": round(
+                laplace_normalized_function(z_scores[interval + 1]), precision
+            ),
+            "probability": probabilities[interval],
+            "expected_frequency": expected_frequencies[interval],
+        }
+        table[interval] = table_entry
+    return table
+
+
+def calculate_chi_squared_components(
+    observed: list[float], expected: dict[int, float], precision: int
+) -> dict[int, dict]:
+    """Calculates components for chi-squared statistic."""
+    components = {}
+    for idx, observed_freq in enumerate(observed, start=1):
+        expected_freq = expected.get(idx, 0)
+        difference = observed_freq - expected_freq
+        component = (difference**2) / expected_freq if expected_freq != 0 else 0
+
+        components[idx] = {
+            "observed": round(observed_freq, precision),
+            "expected": round(expected_freq, precision),
+            "difference": round(difference, precision),
+            "squared_diff": round(difference**2, precision),
+            "component": round(component, precision),
+        }
+    return components
+
+
+def export_table_to_latex(table: dict, filepath: str) -> None:
+    """Exports analysis table to LaTeX format."""
+    compute_table_to_latex_table_str_to_file(table, filepath)
+
+
+# Normal distribution probability density function (not used in current calculation)
+def normal_pdf(x: float) -> float:
+    """Standard normal probability density function."""
+    return (1 / math.sqrt(2 * math.pi)) * math.exp(-(x**2) / 2)
