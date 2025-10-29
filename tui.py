@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
@@ -7,6 +8,7 @@ from textual.widgets import (
     Footer,
     Header,
 )
+from textual import on
 
 from regression import multiple_linear_regression_scalar
 from tui.analyze_dataset import analyze_dataset
@@ -44,6 +46,11 @@ class MyApp(App):
     }
     """
 
+    # Optional: Define key hints for the footer
+    BINDINGS = [
+        ("q", "quit", "Quit"),
+    ]
+
     def __init__(self, csv_path: str = "Student_Performance.csv"):
         super().__init__()
         self.csv_path = csv_path
@@ -60,7 +67,7 @@ class MyApp(App):
         self.target = "Performance Index"
 
         X_full = self.df[self.all_features].values
-        y = self.df[self.target].values
+        y = np.array(self.df[self.target].values)
 
         # Model 1: Full
         self.model1_coeffs = multiple_linear_regression_scalar(y, X_full)
@@ -118,6 +125,10 @@ class MyApp(App):
                 )
 
         yield Footer()
+
+    def action_quit(self) -> None:
+        """Quit the application."""
+        self.exit()
 
 
 if __name__ == "__main__":
