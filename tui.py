@@ -8,7 +8,7 @@ from textual.widgets import (
     Footer,
     Header,
 )
-from textual import on
+from textual.binding import Binding
 
 from regression import multiple_linear_regression_scalar
 from tui.analyze_dataset import analyze_dataset
@@ -48,7 +48,8 @@ class MyApp(App):
 
     # Optional: Define key hints for the footer
     BINDINGS = [
-        ("q", "quit", "Quit"),
+        Binding("q", "quit", "Quit"),
+        Binding("escape", "unfocus", "Unfocus", show=False),  # <-- Add this
     ]
 
     def __init__(self, csv_path: str = "Student_Performance.csv"):
