@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from analyze_dataset import analyze_dataset
 from regression import multiple_linear_regression_scalar
 
 
@@ -83,4 +84,5 @@ def main(csv_path: str = "data.csv"):
 
 
 if __name__ == "__main__":
+    analyze_dataset("Student_Performance.csv")
     main("Student_Performance.csv")
