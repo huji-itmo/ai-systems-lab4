@@ -43,8 +43,8 @@ class StatPanel(Static):
                 if s["mode"] is not None
                 else "Mode:               —"
             ),
-            f"Std (population):   {s['std_pop']:.4f}",
-            f"Std (sample):       {s['std_sample']:.4f}",
+            f"Std:                {s['std']:.4f}",
+            f"Std (corrected):    {s['std_corrected']:.4f}",
             f"Range:              {s['range']:.4f}",
             f"Min:                {s['min']:.4f}",
             f"Max:                {s['max']:.4f}",

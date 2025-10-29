@@ -42,7 +42,7 @@ class StatisticsAnalyzer:
         return self.sorted_data[-1] - self.sorted_data[0]
 
     def get_extremes(self) -> tuple[float, float]:
-        return (self.sorted_data[0], self.sorted_data[1])
+        return (self.sorted_data[0], self.sorted_data[-1])
 
     def get_mode(self) -> float | None:
         max_freq = max(self.statistical_series.values())

@@ -100,7 +100,7 @@ class MyApp(App):
 
     def on_mount(self) -> None:
         self.register_theme(get_theme())
-        self.theme = "catppuccin-mocha"
+        self.theme = "monokai"
 
     def compose(self) -> ComposeResult:
         yield Header()
