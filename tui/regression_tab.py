@@ -44,7 +44,8 @@ class RegressionTab(Static):
             yield Horizontal(label, input_widget)
 
         self.prediction_label = Label(
-            "Prediction: —", id=f"prediction-{sanitize_id(self.model_name)}"
+            "Predicted Performance Index: —",
+            id=f"prediction-{sanitize_id(self.model_name)}",
         )
         yield self.prediction_label
 
@@ -60,7 +61,7 @@ class RegressionTab(Static):
             pred = self.coeffs[0] + np.dot(self.coeffs[1:], x)
             self.prediction_label.update(f"🎯 Predicted Performance Index: {pred:.2f}")
         except Exception:
-            self.prediction_label.update("Prediction: —")
+            self.prediction_label.update("Prediction Performance Index: —")
 
     @on(Input.Changed)
     def on_input_changed(self, event: Input.Changed):
