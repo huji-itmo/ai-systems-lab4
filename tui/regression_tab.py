@@ -18,6 +18,7 @@ class RegressionTab(Static):
         model_name: str,
         feature_names: list[str],
         coeffs: np.ndarray,
+        initial_values: dict[str, float] | None = None,
         *args,
         **kwargs,
     ):
@@ -25,6 +26,7 @@ class RegressionTab(Static):
         self.model_name = model_name
         self.feature_names = feature_names
         self.coeffs = coeffs
+        self.initial_values = initial_values or {}
         self.inputs = {}
 
     def compose(self) -> ComposeResult:
@@ -49,6 +51,19 @@ class RegressionTab(Static):
         )
         yield self.prediction_label
 
+    def on_mount(self) -> None:
+        # Set initial values if provided
+        for feat, widget in self.inputs.items():
+            if feat in self.initial_values:
+                val = self.initial_values[feat]
+                # Format binary features as "0"/"1" strings
+                if "Activities" in feat:
+                    widget.value = str(int(val))
+                else:
+                    widget.value = str(val)
+        # Trigger initial prediction
+        self.predict()
+
     def predict(self):
         try:
             values = []
@@ -61,7 +76,7 @@ class RegressionTab(Static):
             pred = self.coeffs[0] + np.dot(self.coeffs[1:], x)
             self.prediction_label.update(f"🎯 Predicted Performance Index: {pred:.2f}")
         except Exception:
-            self.prediction_label.update("Prediction Performance Index: —")
+            self.prediction_label.update("Predicted Performance Index: —")
 
     @on(Input.Changed)
     def on_input_changed(self, event: Input.Changed):

@@ -66,18 +66,22 @@ class MyApp(App):
         ]
         self.target = "Performance Index"
 
-        X_full = self.df[self.all_features].values
-        y = np.array(self.df[self.target].values)
+        # Sample one random row for initial values
+        random_row = self.df.sample(n=1).iloc[0]
 
         # Model 1: Full
+        X_full = self.df[self.all_features].values
+        y = np.array(self.df[self.target].values)
         self.model1_coeffs = multiple_linear_regression_scalar(y, X_full)
         self.model1_features = self.all_features
+        self.model1_initial = {feat: random_row[feat] for feat in self.model1_features}
 
         # Model 2: 3 features
         feats2 = ["Hours Studied", "Previous Scores", "Sleep Hours"]
         X2 = self.df[feats2].values
         self.model2_coeffs = multiple_linear_regression_scalar(y, X2)
         self.model2_features = feats2
+        self.model2_initial = {feat: random_row[feat] for feat in self.model2_features}
 
         # Model 3: 4 features
         feats3 = [
@@ -89,6 +93,7 @@ class MyApp(App):
         X3 = self.df[feats3].values
         self.model3_coeffs = multiple_linear_regression_scalar(y, X3)
         self.model3_features = feats3
+        self.model3_initial = {feat: random_row[feat] for feat in self.model3_features}
 
         # Analyze dataset
         self.analysis_results = analyze_dataset(csv_path)
@@ -107,7 +112,10 @@ class MyApp(App):
 
             with TabPane("📈 Regression 1 (Full)"):
                 yield RegressionTab(
-                    "Model 1: Full Features", self.model1_features, self.model1_coeffs
+                    "Model 1: Full Features",
+                    self.model1_features,
+                    self.model1_coeffs,
+                    initial_values=self.model1_initial,
                 )
 
             with TabPane("📈 Regression 2 (3 Features)"):
@@ -115,6 +123,7 @@ class MyApp(App):
                     "Model 2: Hours, Scores, Sleep",
                     self.model2_features,
                     self.model2_coeffs,
+                    initial_values=self.model2_initial,
                 )
 
             with TabPane("📈 Regression 3 (4 Features)"):
@@ -122,6 +131,7 @@ class MyApp(App):
                     "Model 3: Scores, Extra, Papers, Sleep",
                     self.model3_features,
                     self.model3_coeffs,
+                    initial_values=self.model3_initial,
                 )
 
         yield Footer()
