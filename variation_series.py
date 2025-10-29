@@ -1,6 +1,5 @@
 from collections import OrderedDict
 import math
-
 import scipy
 import numpy as np
 from q_table import get_q_table_value
@@ -8,157 +7,158 @@ from q_table import get_q_table_value
 np.set_printoptions(legacy="1.25")
 
 
-def get_variation_series(nums: list[float]):
-    return sorted(nums)
+class StatisticsAnalyzer:
+    def __init__(self, data: list[float]):
+        if not data:
+            raise ValueError("Input data list cannot be empty.")
+        self.data = data
+        self._sorted_data = None
+        self._statistical_series = None
 
+    @property
+    def sorted_data(self) -> list[float]:
+        if self._sorted_data is None:
+            self._sorted_data = sorted(self.data)
+        return self._sorted_data
 
-def get_variation_series_pretty(nums: list[float]):
-    return " ≤ ".join(map(str, get_variation_series(nums)))
+    @property
+    def statistical_series(self) -> OrderedDict[float, int]:
+        if self._statistical_series is None:
+            freq = {}
+            for num in self.data:
+                freq[num] = freq.get(num, 0) + 1
+            self._statistical_series = OrderedDict(sorted(freq.items()))
+        return self._statistical_series
 
+    # --- Basic descriptive statistics ---
 
-def get_whole_range(nums: list[float]):
-    return max(nums) - min(nums)
+    def get_variation_series(self) -> list[float]:
+        return self.sorted_data
 
+    def get_variation_series_pretty(self) -> str:
+        return " ≤ ".join(map(str, self.sorted_data))
 
-def get_extremes(nums: list[float]):
-    sorted_nums: list[float] = get_variation_series(nums)
+    def get_whole_range(self) -> float:
+        return self.sorted_data[-1] - self.sorted_data[0]
 
-    output_str: str = f"min: {sorted_nums[0]} "
-    output_str += f"max: {sorted_nums[-1]} "
+    def get_extremes(self) -> str:
+        return f"min: {self.sorted_data[0]} max: {self.sorted_data[-1]}"
 
-    return output_str
+    def get_mode(self) -> float | None:
+        max_freq = max(self.statistical_series.values())
+        for key, freq in self.statistical_series.items():
+            if freq == max_freq:
+                return key
+        return None
 
+    def get_median(self) -> float:
+        n = len(self.sorted_data)
+        mid = n // 2
+        if n % 2 == 0:
+            return (self.sorted_data[mid - 1] + self.sorted_data[mid]) / 2
+        else:
+            return self.sorted_data[mid]
 
-def get_statistical_series(nums) -> dict[float, int]:
-    number_freq = dict()
-    for num in nums:
-        if number_freq.get(num, None) == None:
-            number_freq[num] = 0
-        number_freq[num] += 1
-    return OrderedDict(sorted(number_freq.items()))
+    # --- Expected value and deviation ---
 
+    def get_expected_value_estimate(self) -> float:
+        return sum(self.data) / len(self.data)
 
-def get_mode(nums: list[float]) -> float | None:
-    number_freq = get_statistical_series(nums)
+    def get_expected_value_deviation(self) -> float:
+        expected = self.get_expected_value_estimate()
+        return sum(x - expected for x in self.data)
 
-    max_occurrences = max(value for key, value in number_freq.items())
+    # --- Variance and standard deviation ---
 
-    for key, value in number_freq.items():
-        if value == max_occurrences:
-            return key
-    return None
+    def get_sample_variance(self, expected_value: float | None = None) -> float:
+        ev = (
+            expected_value
+            if expected_value is not None
+            else self.get_expected_value_estimate()
+        )
+        return sum((x - ev) ** 2 for x in self.data) / len(self.data)
 
+    def moment_of_nth_order(
+        self, nth_order: int, expected_value: float | None = None
+    ) -> float:
+        ev = (
+            expected_value
+            if expected_value is not None
+            else self.get_expected_value_estimate()
+        )
+        return sum((x - ev) ** nth_order for x in self.data) / len(self.data)
 
-def get_median(nums: list[float]):
-    sorted_nums: list[float] = get_variation_series(nums)
+    def get_sample_standard_deviation(
+        self, expected_value: float | None = None
+    ) -> float:
+        variance = self.get_sample_variance(expected_value)
+        return math.sqrt(variance)
 
-    if len(sorted_nums) % 2 == 0:
-        median_index: int = math.floor(len(sorted_nums) / 2)
+    def get_sample_standard_deviation_corrected(
+        self, expected_value: float | None = None
+    ) -> float:
+        variance = self.get_sample_variance(expected_value)
+        n = len(self.data)
+        if n <= 1:
+            raise ValueError("Cannot compute corrected standard deviation for n <= 1.")
+        return math.sqrt(variance * (n / (n - 1)))
 
-        return (nums[median_index] + nums[median_index + 1]) / 2
-    else:
-        median_index: int = math.floor(len(sorted_nums) / 2)
+    # --- Distribution and confidence intervals ---
 
-        return nums[median_index]
+    def empirical_distribution_function(self, x: float) -> float:
+        count = sum(1 for value in self.data if value < x)
+        return count / len(self.data)
 
+    @staticmethod
+    def laplace_function(x: float) -> float:
+        return scipy.stats.norm.cdf(x)
 
-def get_expected_value_estimate(nums: list[float]) -> float:
-    # просто средне арифметическое
-    return (1 / len(nums)) * sum(nums)
+    @staticmethod
+    def laplace_normalized_function(x: float) -> float:
+        return StatisticsAnalyzer.laplace_function(x) - 0.5
 
+    @staticmethod
+    def student_coefficient(gamma: float, degrees_of_freedom: int) -> float:
+        return scipy.stats.t.ppf(gamma, degrees_of_freedom)
 
-def get_expected_value_deviation(nums: list[float]) -> float:
-    # просто средне арифметическое
-    expected_value = get_expected_value_estimate(nums)
+    @staticmethod
+    def get_inverse_laplace(alpha: float, error_margin: float = 0.0001) -> float:
+        step = 2.0
+        last_point = step
+        while (
+            abs(StatisticsAnalyzer.laplace_function(last_point) - alpha) > error_margin
+        ):
+            if StatisticsAnalyzer.laplace_function(last_point) < alpha:
+                last_point += step
+            else:
+                last_point -= step
+            step /= 2
+        return last_point
 
-    return sum(x - expected_value for x in nums)
+    def get_confidence_interval_for_expvalue(
+        self, confidence_prob: float, sigma: float | None = None
+    ) -> tuple[float, float]:
+        n = len(self.data)
+        avg = self.get_expected_value_estimate()
+        sigma_used = (
+            sigma if sigma is not None else self.get_sample_standard_deviation()
+        )
 
+        if n <= 30:
+            t_gamma = self.student_coefficient(confidence_prob / 2 + 0.5, n - 1)
+        else:
+            t_gamma = self.get_inverse_laplace(confidence_prob / 2 + 0.5)
 
-# Выборочная дисперсия
-def get_sample_variance(nums: list[float], expected_value: float) -> float:
-    # тут не нужно умножать на n_i (частоту значения), потому что
-    # мы пользуемся массивом (с повторяющимися элементами), а не множеством
-    return sum(map(lambda x: (x - expected_value) ** 2, nums)) / len(nums)
+        margin = t_gamma * sigma_used / math.sqrt(n)
+        return avg - margin, avg + margin
 
-
-def moment_of_nth_order(nums: list[float], expected_value: float, nth_order: int):
-    return sum(map(lambda x: (x - expected_value) ** nth_order, nums)) / len(nums)
-
-
-# Выборочное среднеквадратическое отклонение
-def get_sample_standard_deviation(nums: list[float], expected_value: float):
-    sample_variance = get_sample_variance(nums, expected_value)
-    return math.sqrt(sample_variance)
-
-
-# Выборочное среднеквадратическое отклонение (исправленная)
-def get_sample_standard_deviation_corrected(
-    nums: list[float], expected_value: float
-) -> float:
-    sample_variance = get_sample_variance(nums, expected_value)
-    return math.sqrt(sample_variance * (len(nums) / (len(nums) - 1)))
-
-
-def empirical_distribution_function(x: float, data: list[float]) -> float:
-    count = 0
-
-    for value in data:
-        if value < x:
-            count += 1
-
-    return count / len(data)
-
-
-def laplace_function(x: float) -> float:
-    return scipy.stats.norm.cdf(x)
-
-
-def student_coefficient(gamma, n):
-    return scipy.stats.t.ppf(gamma, n)
-
-
-def laplace_normalized_function(x: float) -> float:
-    return laplace_function(x) - 0.5
-
-
-def get_inverse_laplace(alpha: float):
-    error_margin = 0.0001
-    # начальное значение - половина от максимального
-    step = 4 / 2
-
-    last_point = step
-    last_value = 0
-    while math.fabs(last_value - alpha) > error_margin:
-        last_value = laplace_function(last_point)
-
-        if last_value < alpha:
-            last_point += step
-        if last_value >= alpha:
-            last_point -= step
-
-        step = step / 2
-
-    return last_point
-
-
-def get_confidence_interval_for_expvalue(
-    average_value: float, n: int, sigma: float, confidence_prob: float
-) -> tuple[float, float]:
-    t_gamma = 0
-    if n <= 30:
-        t_gamma = student_coefficient(confidence_prob / 2 + 0.5, n - 1)
-    else:
-        t_gamma = get_inverse_laplace(confidence_prob / 2 + 0.5)
-
-    res = t_gamma * sigma / math.sqrt(n)
-    return average_value - res, average_value + res
-
-
-def get_confidence_interval_for_standard_deviation(
-    sigma_corrected: float, n: int, gamma: float
-) -> tuple[float, float]:
-    q = get_q_table_value(gamma, n)
-    if q < 1:
-        return sigma_corrected * (1 - q), sigma_corrected * (1 + q)
-    else:
-        return 0, sigma_corrected * (1 + q)
+    def get_confidence_interval_for_standard_deviation(
+        self, gamma: float
+    ) -> tuple[float, float]:
+        n = len(self.data)
+        sigma_corr = self.get_sample_standard_deviation_corrected()
+        q = get_q_table_value(gamma, n)
+        if q < 1:
+            return sigma_corr * (1 - q), sigma_corr * (1 + q)
+        else:
+            return 0.0, sigma_corr * (1 + q)
