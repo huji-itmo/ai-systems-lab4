@@ -1,17 +1,9 @@
 import numpy as np
 import pandas as pd
 
-from analyze_dataset import analyze_dataset
+from tui.analyze_dataset import analyze_dataset
 from regression import multiple_linear_regression_scalar
-
-
-def preprocess_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert categorical 'Extracurricular Activities' to binary."""
-    df = df.copy()
-    df["Extracurricular Activities"] = df["Extracurricular Activities"].map(
-        {"Yes": 1, "No": 0}
-    )
-    return df
+from tui.helper import preprocess_features
 
 
 def main(csv_path: str = "data.csv"):
@@ -84,5 +76,5 @@ def main(csv_path: str = "data.csv"):
 
 
 if __name__ == "__main__":
-    analyze_dataset("Student_Performance.csv")
+    print(analyze_dataset("Student_Performance.csv"))
     main("Student_Performance.csv")

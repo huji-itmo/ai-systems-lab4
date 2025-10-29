@@ -41,8 +41,8 @@ class StatisticsAnalyzer:
     def get_whole_range(self) -> float:
         return self.sorted_data[-1] - self.sorted_data[0]
 
-    def get_extremes(self) -> str:
-        return f"min: {self.sorted_data[0]} max: {self.sorted_data[-1]}"
+    def get_extremes(self) -> tuple[float, float]:
+        return (self.sorted_data[0], self.sorted_data[1])
 
     def get_mode(self) -> float | None:
         max_freq = max(self.statistical_series.values())
