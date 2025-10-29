@@ -1,38 +1,7 @@
 import numpy as np
 import pandas as pd
-from typing import Union, List
 
-
-def multiple_linear_regression_scalar(y: np.ndarray, X: np.ndarray) -> np.ndarray:
-    """
-    Solve multiple linear regression using the scalar method (normal equations).
-
-    Parameters:
-        y : np.ndarray, shape (n,)
-            Dependent variable (target).
-        X : np.ndarray, shape (n, p)
-            Independent variables (features), without intercept column.
-
-    Returns:
-        coeffs : np.ndarray, shape (p + 1,)
-            Regression coefficients [intercept, b1, b2, ..., bp].
-    """
-    X = np.asarray(X, dtype=float)
-    y = np.asarray(y, dtype=float)
-
-    if X.shape[0] != y.shape[0]:
-        raise ValueError("Number of samples in X and y must match.")
-
-    # Add intercept column (ones)
-    X_with_const = np.column_stack([np.ones(X.shape[0]), X])
-
-    # Normal equations: (X'X) β = X'y
-    XtX = X_with_const.T @ X_with_const
-    Xty = X_with_const.T @ y
-
-    # Solve for coefficients
-    coeffs = np.linalg.solve(XtX, Xty)
-    return coeffs
+from regression import multiple_linear_regression_scalar
 
 
 def preprocess_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -62,7 +31,7 @@ def main(csv_path: str = "data.csv"):
     target_column = "Performance Index"
 
     X = df[feature_columns].values
-    y = df[target_column].values
+    y = np.array(df[target_column].values)
 
     # Fit model
     coeffs = multiple_linear_regression_scalar(y, X)
@@ -73,6 +42,23 @@ def main(csv_path: str = "data.csv"):
     print(f"Intercept (a): {intercept:.4f}")
     for name, beta in zip(feature_columns, betas):
         print(f"Coefficient for '{name}': {beta:.4f}")
+
+    # --- Compute predictions on training data ---
+    X_with_const = np.column_stack([np.ones(X.shape[0]), X])
+    y_pred = X_with_const @ coeffs
+
+    # --- Compute R² (coefficient of determination) ---
+    ss_res = np.sum((y - y_pred) ** 2)
+    ss_tot = np.sum((y - np.mean(y)) ** 2)
+    r_squared = 1 - (ss_res / ss_tot)
+
+    # --- Compute Pearson correlation coefficient R (without scipy) ---
+    # Using np.corrcoef — returns a 2x2 matrix; [0,1] is the correlation
+    r = np.corrcoef(y, y_pred)[0, 1]
+
+    print(f"\n📊 Model Performance:")
+    print(f"R² (Coefficient of Determination): {r_squared:.4f}")
+    print(f"R (Correlation Coefficient): {r:.4f}")
 
     # Example prediction
     print("\n--- Predict Performance Index ---")
@@ -97,5 +83,4 @@ def main(csv_path: str = "data.csv"):
 
 
 if __name__ == "__main__":
-    # You can change this path if your file has a different name
     main("Student_Performance.csv")
