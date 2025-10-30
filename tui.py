@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
+from textual.containers import VerticalScroll, Grid
 from textual.widgets import (
     TabbedContent,
     TabPane,
@@ -43,6 +43,12 @@ class MyApp(App):
     }
     .error {
         color: $error;
+    }
+
+    #stats_grid {
+        grid-size: 3;
+        grid-gutter: 1;
+        height: auto;
     }
     """
 
@@ -89,8 +95,9 @@ class MyApp(App):
         with TabbedContent():
             with TabPane("📊 Dataset Statistics"):
                 with VerticalScroll():
-                    for var_name, stats in self.analysis_results.items():
-                        yield StatPanel(var_name=var_name, stats=stats)
+                    with Grid(id="stats_grid"):
+                        for var_name, stats in self.analysis_results.items():
+                            yield StatPanel(var_name=var_name, stats=stats)
 
             with TabPane("🔍 kNN: All Features (8)"):
                 with VerticalScroll():
