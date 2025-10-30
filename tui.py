@@ -10,7 +10,7 @@ from textual.widgets import (
 )
 from textual.binding import Binding
 
-from regression import multiple_linear_regression_scalar
+from tui.regression import multiple_linear_regression_scalar
 from tui.analyze_dataset import analyze_dataset
 from tui.helper import preprocess_features
 from tui.regression_tab import RegressionTab

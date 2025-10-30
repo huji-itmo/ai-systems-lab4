@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from tui.analyze_dataset import analyze_dataset
-from regression import multiple_linear_regression_scalar
+from tui.regression import multiple_linear_regression_scalar
 from tui.helper import preprocess_features
 
 
