@@ -8,6 +8,7 @@ from textual.widgets import Static, Input, Label
 from textual.validation import Number
 
 from tui.helper import sanitize_id
+from tui.kNN import predict_knn
 
 
 class KNNTab(Static):
@@ -73,16 +74,15 @@ class KNNTab(Static):
                     raise ValueError("Missing input")
                 values.append(float(val))
             x_input = np.array(values)
-            distances = np.linalg.norm(self.x_data - x_input, axis=1)
 
-            for k in self.k_values:
-                if k > len(self.y_data):
-                    text = "Predicted Diabetes (k={k}): — (insufficient data)"
-                else:
-                    nearest_idx = np.argsort(distances)[:k]
-                    pred = np.mean(self.y_data[nearest_idx])
-                    outcome = "yes" if pred >= 0.5 else "no"
-                    text = f"🎯 Predicted Diabetes (k={k}): {pred:.2f} -> {outcome}"
+            predictions = predict_knn(
+                x_input=x_input,
+                x_data=self.x_data,
+                y_data=self.y_data,
+                k_values=self.k_values,
+            )
+
+            for k, text in predictions.items():
                 self.prediction_labels[k].update(text)
 
         except Exception:

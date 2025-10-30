@@ -8,6 +8,7 @@ from textual.widgets import Static, Input, Label, Checkbox
 from textual.validation import Number
 
 from tui.helper import sanitize_id
+from tui.kNN import predict_knn
 
 
 class DynamickNNTab(Static):
@@ -122,16 +123,15 @@ class DynamickNNTab(Static):
             x_input = np.array(input_values)
             col_indices = [self.all_feature_names.index(f) for f in selected_list]
             x_data_selected = self.x_data_full[:, col_indices]
-            distances = np.linalg.norm(x_data_selected - x_input, axis=1)
 
-            for k in self.k_values:
-                if k > len(self.y_data):
-                    text = f"Predicted Diabetes (k={k}): — (insufficient data)"
-                else:
-                    nearest_idx = np.argsort(distances)[:k]
-                    pred = np.mean(self.y_data[nearest_idx])
-                    outcome = "yes" if pred >= 0.5 else "no"
-                    text = f"🎯 Predicted Diabetes (k={k}): {pred:.2f} -> {outcome}"
+            predictions = predict_knn(
+                x_input=x_input,
+                x_data=x_data_selected,
+                y_data=self.y_data,
+                k_values=self.k_values,
+            )
+
+            for k, text in predictions.items():
                 self.prediction_labels[k].update(text)
 
         except Exception:

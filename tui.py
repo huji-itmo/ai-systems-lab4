@@ -11,7 +11,6 @@ from textual.widgets import (
 from textual.binding import Binding
 
 from tui.dynamic_kNN_tab import DynamickNNTab
-from tui.regression import multiple_linear_regression_scalar
 from tui.analyze_dataset import analyze_dataset
 from tui.kNN_tab import KNNTab
 from tui.stat_panel import StatPanel
