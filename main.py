@@ -115,12 +115,18 @@ def main():
         print("\n🎲 No input provided. Using a random patient from the dataset...")
         random_row = df.sample(n=1).iloc[0]
         for feat in feature_names:
-            user_values[feat] = float(random_row[feat])
+            value = float(random_row[feat])
+            user_values[feat] = value
+            print(f"feat {feat}: {value}")
+
     else:
         # Fill missing with random values
         for feat in feature_names:
             if user_values[feat] is None:
-                user_values[feat] = float(df[feat].dropna().sample(n=1).iloc[0])
+                value = float(df[feat].dropna().sample(n=1).iloc[0])
+                user_values[feat] = value
+                print(f"feat {feat}: {value}")
+
         print("\n📝 Missing values filled with random samples from the dataset.")
 
     # Prepare input vector
