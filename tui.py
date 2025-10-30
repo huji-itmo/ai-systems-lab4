@@ -54,7 +54,7 @@ class MyApp(App):
 
     # Optional: Define key hints for the footer
     BINDINGS = [
-        Binding("ctrl+q", "quit", "Quit"),
+        Binding("q", "quit", "Quit"),
         Binding("escape", "unfocus", "Unfocus", show=False),  # <-- Add this
     ]
 
