@@ -10,11 +10,6 @@ def analyze_dataset(csv_path: str = "Student_Performance.csv", plot_dir: str = "
     os.makedirs(plot_dir, exist_ok=True)
     df = pd.read_csv(csv_path)
 
-    if "Extracurricular Activities" in df.columns:
-        df["Extracurricular Activities"] = df["Extracurricular Activities"].map(
-            {"Yes": 1.0, "No": 0.0}
-        )
-
     numeric_df = df.select_dtypes(include=["number"])
     results = {}
 
