@@ -19,6 +19,14 @@ from tui.theme import get_theme
 
 class MyApp(App):
     CSS = """
+    #feature-checkboxes {
+        min-height: 24;
+    }
+
+    #dynamic-inputs {
+        min-height: 24;
+    }
+
     TabbedContent {
         height: 100%;
     }
@@ -47,7 +55,7 @@ class MyApp(App):
 
     # Optional: Define key hints for the footer
     BINDINGS = [
-        Binding("q", "quit", "Quit"),
+        Binding("ctrl+q", "quit", "Quit"),
         Binding("escape", "unfocus", "Unfocus", show=False),  # <-- Add this
     ]
 
@@ -102,23 +110,22 @@ class MyApp(App):
                     )
 
             with TabPane("⚙️ kNN: Custom Feature Selection"):
-                with VerticalScroll():
-                    yield DynamickNNTab(
-                        model_name="kNN – Select Features",
-                        all_feature_names=[
-                            "Pregnancies",
-                            "Glucose",
-                            "BloodPressure",
-                            "SkinThickness",
-                            "Insulin",
-                            "BMI",
-                            "Pedigree",
-                            "Age",
-                        ],
-                        x_data=self.X_all.tolist(),  # Full x_data
-                        y_data=self.y.tolist(),
-                        initial_values=self.model1_initial,  # Same initial row
-                    )
+                yield DynamickNNTab(
+                    model_name="kNN – Select Features",
+                    all_feature_names=[
+                        "Pregnancies",
+                        "Glucose",
+                        "BloodPressure",
+                        "SkinThickness",
+                        "Insulin",
+                        "BMI",
+                        "Pedigree",
+                        "Age",
+                    ],
+                    x_data=self.X_all.tolist(),  # Full x_data
+                    y_data=self.y.tolist(),
+                    initial_values=self.model1_initial,  # Same initial row
+                )
 
         yield Footer()
 

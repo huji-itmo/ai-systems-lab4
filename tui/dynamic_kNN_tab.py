@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Static, Input, Label, Checkbox
 from textual.validation import Number
 
@@ -35,32 +35,39 @@ class DynamickNNTab(Static):
         self.prediction_labels = {}
 
     def compose(self) -> ComposeResult:
-        yield Label(f"[b]{self.model_name}[/b]", classes="title")
-        yield Label("✅ Select features to use for prediction:", classes="subtitle")
-
-        # Yield checkboxes directly inside a Vertical
-        with Vertical(id="feature-checkboxes"):
-            for feat in self.all_feature_names:
-                cb = Checkbox(feat, value=True, id=f"cb-{sanitize_id(feat)}")
-                self.checkboxes[feat] = cb
-                yield cb
-
-        yield Label("")  # spacer
-
-        # Inputs will be added later in on_mount or via event
-        self.inputs_container = Vertical(id="dynamic-inputs")
-        yield self.inputs_container
-
-        yield Label("")  # spacer
-
-        # Prediction outputs
-        for k in self.k_values:
-            label = Label(
-                "Predicted Diabetes: —",
-                id=f"prediction-k{k}-{sanitize_id(self.model_name)}",
+        with VerticalScroll():
+            yield Label(
+                "✅ Select features to use for prediction (scrollable):",
+                classes="title",
             )
-            self.prediction_labels[k] = label
-            yield label
+
+            # Yield checkboxes directly inside a Vertical
+            with VerticalScroll():
+                with Vertical(id="feature-checkboxes"):
+                    for feat in self.all_feature_names:
+                        cb = Checkbox(feat, value=True, id=f"cb-{sanitize_id(feat)}")
+                        self.checkboxes[feat] = cb
+                        yield cb
+
+            yield Label(
+                "🩺Input selected values (scrollable)", classes="title"
+            )  # spacer
+
+            with VerticalScroll():
+                # Inputs will be added later in on_mount or via event
+                self.inputs_container = Vertical(id="dynamic-inputs")
+                yield self.inputs_container
+
+            yield Label("")  # spacer
+
+            # Prediction outputs
+            for k in self.k_values:
+                label = Label(
+                    "Predicted Diabetes: —",
+                    id=f"prediction-k{k}-{sanitize_id(self.model_name)}",
+                )
+                self.prediction_labels[k] = label
+                yield label
 
     def on_mount(self) -> None:
         self._refresh_inputs()
