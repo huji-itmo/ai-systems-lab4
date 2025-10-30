@@ -10,7 +10,7 @@ def predict_knn(
     threshold: float = 0.5,
 ) -> Dict[int, str]:
     """
-    Perform k-Nearest Neighbors prediction for multiple k values.
+    Perform distance-weighted k-Nearest Neighbors prediction for multiple k values.
 
     Parameters:
     -----------
@@ -36,12 +36,24 @@ def predict_knn(
     distances = np.linalg.norm(x_data - x_input, axis=1)
     results = {}
 
+    # Small epsilon to prevent division by zero
+    eps = 1e-8
+
     for k in k_values:
         if k > len(y_data):
             results[k] = f"Predicted Diabetes (k={k}): — (insufficient data)"
         else:
+            # Get indices of k nearest neighbors
             nearest_idx = np.argsort(distances)[:k]
-            pred = float(np.mean(y_data[nearest_idx]))  # Ensure float for JSON/etc.
+            neighbor_distances = distances[nearest_idx]
+            neighbor_labels = y_data[nearest_idx]
+
+            # Compute inverse-distance weights
+            weights = 1.0 / (neighbor_distances + eps)
+
+            # Weighted average prediction
+            pred = float(np.average(neighbor_labels, weights=weights))
+
             outcome = "yes" if pred >= threshold else "no"
             results[k] = f"🎯 Predicted Diabetes (k={k}): {pred:.2f} -> {outcome}"
 
