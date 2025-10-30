@@ -19,13 +19,6 @@ from tui.theme import get_theme
 
 class MyApp(App):
     CSS = """
-    #feature-checkboxes {
-        min-height: 24;
-    }
-
-    #dynamic-inputs {
-        min-height: 24;
-    }
 
     TabbedContent {
         height: 100%;

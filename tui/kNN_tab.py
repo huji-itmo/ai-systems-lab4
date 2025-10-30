@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical, VerticalScroll, Grid
 from textual.widgets import Static, Input, Label
 from textual.validation import Number
 
@@ -12,6 +12,21 @@ from tui.kNN import predict_knn
 
 
 class KNNTab(Static):
+    DEFAULT_CSS = """
+        .section {
+            margin: 1 0;
+            padding: 1;
+            border: solid $primary;
+            height: auto;
+            min-height: 6;
+        }
+        #inputs {
+            grid-size: 2;      /* 3 columns — adjust as needed */
+            grid-gutter: 1;    /* spacing between items (was grid-gap) */
+            height: auto;
+        }
+    """
+
     def __init__(
         self,
         model_name: str,
@@ -33,31 +48,33 @@ class KNNTab(Static):
         self.prediction_labels = {}
 
     def compose(self) -> ComposeResult:
-        yield Label(f"[b]{self.model_name}[/b]", classes="title")
-        yield Label("")  # spacer
+        with VerticalScroll():
+            # Input section
+            with Vertical(classes="section") as input_section:
+                input_section.border_title = "🩺 Input Values"
+                with Grid(id="inputs"):
+                    for feat in self.feature_names:
+                        label = Label(f"{feat}:")
+                        validator = Number(minimum=0)
+                        safe_id = f"input-{sanitize_id(feat)}"
+                        input_widget = Input(
+                            placeholder=f"Enter {feat}",
+                            validators=[validator],
+                            id=safe_id,
+                        )
+                        self.inputs[feat] = input_widget
+                        yield Horizontal(label, input_widget)
 
-        for feat in self.feature_names:
-            label = Label(f"{feat}:")
-            # All diabetes features are non-negative numbers
-            validator = Number(minimum=0)
-            safe_id = f"input-{sanitize_id(feat)}"
-            input_widget = Input(
-                placeholder=f"Enter {feat}",
-                validators=[validator],
-                id=safe_id,
-            )
-            self.inputs[feat] = input_widget
-            yield Horizontal(label, input_widget)
-
-        yield Label("")  # spacer
-
-        for k in self.k_values:
-            label_widget = Label(
-                "Predicted Diabetes: —",
-                id=f"prediction-k{k}-{sanitize_id(self.model_name)}",
-            )
-            self.prediction_labels[k] = label_widget
-            yield label_widget
+            # Prediction section
+            with Vertical(classes="section") as pred_section:
+                pred_section.border_title = "🔍 Predictions"
+                for k in self.k_values:
+                    label_widget = Label(
+                        "Predicted Diabetes: —",
+                        id=f"prediction-k{k}-{sanitize_id(self.model_name)}",
+                    )
+                    self.prediction_labels[k] = label_widget
+                    yield label_widget
 
     def on_mount(self) -> None:
         for feat, widget in self.inputs.items():

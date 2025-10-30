@@ -2,16 +2,11 @@ import numpy as np
 import pandas as pd
 
 from tui.analyze_dataset import analyze_dataset
-from tui.regression import multiple_linear_regression_scalar
-from tui.helper import preprocess_features
 
 
 def main(csv_path: str = "data.csv"):
     # Load data
     df = pd.read_csv(csv_path)
-
-    # Preprocess
-    df = preprocess_features(df)
 
     # Define features and target
     feature_columns = [
