@@ -1,10 +1,10 @@
 import numpy as np
-from typing import Union, List, Tuple
+from typing import Union, List
 
 
 def multiple_linear_regression_scalar(
     y: Union[List[float], np.ndarray], X: Union[List[List[float]], np.ndarray]
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.float64, np.float64]:
     """
     Выполняет множественную линейную регрессию методом нормальных уравнений
     (скалярный подход: построение и решение системы уравнений).
@@ -34,13 +34,20 @@ def multiple_linear_regression_scalar(
 
     n, p = X.shape
 
-    # Добавляем столбец единиц для свободного члена
     X_with_const = np.column_stack([np.ones(n), X])  # shape (n, p+1)
 
-    # Строим систему нормальных уравнений: (X'X) * coeffs = X'y
     XtX = X_with_const.T @ X_with_const  # (p+1) x (p+1)
     Xty = X_with_const.T @ y  # (p+1,)
 
-    # Решаем систему
     coeffs = np.linalg.solve(XtX, Xty)
-    return coeffs
+
+    X_with_const = np.column_stack([np.ones(X.shape[0]), X])
+    y_pred = X_with_const @ coeffs
+
+    ss_res = np.sum((y - y_pred) ** 2)
+    ss_tot = np.sum((y - np.mean(y)) ** 2)
+    r_squared = 1 - (ss_res / ss_tot)
+
+    r = np.corrcoef(y, y_pred)[0, 1]
+
+    return coeffs, r, r_squared

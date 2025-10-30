@@ -73,14 +73,20 @@ class MyApp(App):
         # Model 1: Full
         X_full = self.df[self.all_features].values
         y = np.array(self.df[self.target].values)
-        self.model1_coeffs = multiple_linear_regression_scalar(y, X_full)
+        coeffs1, r1, r2_1 = multiple_linear_regression_scalar(y, X_full)
+        self.model1_coeffs = coeffs1
+        self.model1_r = r1
+        self.model1_r2 = r2_1
         self.model1_features = self.all_features
         self.model1_initial = {feat: random_row[feat] for feat in self.model1_features}
 
         # Model 2: 3 features
         feats2 = ["Hours Studied", "Previous Scores", "Sleep Hours"]
         X2 = self.df[feats2].values
-        self.model2_coeffs = multiple_linear_regression_scalar(y, X2)
+        coeffs2, r2, r2_2 = multiple_linear_regression_scalar(y, X2)
+        self.model2_coeffs = coeffs2
+        self.model2_r = r2
+        self.model2_r2 = r2_2
         self.model2_features = feats2
         self.model2_initial = {feat: random_row[feat] for feat in self.model2_features}
 
@@ -92,10 +98,12 @@ class MyApp(App):
             "Sleep Hours",
         ]
         X3 = self.df[feats3].values
-        self.model3_coeffs = multiple_linear_regression_scalar(y, X3)
+        coeffs3, r3, r2_3 = multiple_linear_regression_scalar(y, X3)
+        self.model3_coeffs = coeffs3
+        self.model3_r = r3
+        self.model3_r2 = r2_3
         self.model3_features = feats3
         self.model3_initial = {feat: random_row[feat] for feat in self.model3_features}
-
         # Analyze dataset
         self.analysis_results = analyze_dataset(csv_path)
 
@@ -116,6 +124,8 @@ class MyApp(App):
                     "Model 1: Full Features",
                     self.model1_features,
                     self.model1_coeffs,
+                    self.model1_r,
+                    self.model1_r2,
                     initial_values=self.model1_initial,
                 )
 
@@ -124,6 +134,8 @@ class MyApp(App):
                     "Model 2: Hours, Scores, Sleep",
                     self.model2_features,
                     self.model2_coeffs,
+                    self.model2_r,
+                    self.model2_r2,
                     initial_values=self.model2_initial,
                 )
 
@@ -132,6 +144,8 @@ class MyApp(App):
                     "Model 3: Scores, Extra, Papers, Sleep",
                     self.model3_features,
                     self.model3_coeffs,
+                    self.model3_r,
+                    self.model3_r2,
                     initial_values=self.model3_initial,
                 )
 

@@ -18,6 +18,8 @@ class RegressionTab(Static):
         model_name: str,
         feature_names: list[str],
         coeffs: np.ndarray,
+        r: float,
+        r_squared: float,
         initial_values: dict[str, float] | None = None,
         *args,
         **kwargs,
@@ -26,11 +28,24 @@ class RegressionTab(Static):
         self.model_name = model_name
         self.feature_names = feature_names
         self.coeffs = coeffs
+        self.r = r
+        self.r_squared = r_squared
         self.initial_values = initial_values or {}
         self.inputs = {}
 
     def compose(self) -> ComposeResult:
         yield Label(f"[b]{self.model_name}[/b]", classes="title")
+
+        # Model fit statistics
+        yield Label(
+            f"Correlation (r): {self.r:.4f}", id=f"r-{sanitize_id(self.model_name)}"
+        )
+        yield Label(
+            f"Coefficient of Determination (R²): {self.r_squared:.4f}",
+            id=f"r2-{sanitize_id(self.model_name)}",
+        )
+        yield Label("")  # spacer
+
         for feat in self.feature_names:
             label = Label(f"{feat}:")
             validator = (
